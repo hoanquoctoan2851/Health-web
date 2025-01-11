@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import sass from "sass";
 import { resolve } from "path";
 import { wrapperEnv } from "./src/utils/getEnvConfig";
+import tailwindcss from "tailwindcss";
 export default defineConfig((mode: ConfigEnv): UserConfig => {
 	const env = loadEnv(mode.mode, process.cwd());
 	const viteEnv = wrapperEnv(env);
@@ -19,6 +20,9 @@ export default defineConfig((mode: ConfigEnv): UserConfig => {
 				scss: {
 					implementation: sass
 				}
+			},
+			postcss: {
+				plugins: [tailwindcss()]
 			}
 		},
 		resolve: {
