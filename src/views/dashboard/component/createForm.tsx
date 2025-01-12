@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Col, Row } from "react-bootstrap";
 import * as Yup from "yup";
 import { ExtendedFormValues } from "./list";
-import { LIST_COUNTRY, LIST_GENDER, LIST_OBJECT } from "@/utils/contanst";
+import { DATA_PROVINCE, LIST_COUNTRY, LIST_GENDER, LIST_OBJECT } from "@/utils/contanst";
 import { useNavigate, useParams } from "react-router-dom";
 interface TravelInfo {
 	departureDate: string;
@@ -80,9 +80,29 @@ function generateRandomString() {
 	}
 	return result;
 }
+
+interface CityData {
+	[key: string]: {
+		name: string;
+		cities: { [key: string]: string };
+	};
+}
+
+const data: CityData = DATA_PROVINCE
 const PersonalInformationForm: React.FC = () => {
 	const [defaultValue, setDefaultValue] = useState(initialValues);
 	const navigation = useNavigate();
+	const [districts, setDistricts] = useState<[string, string][]>([]);
+
+	const handleProvinceChange = (
+		event: React.ChangeEvent<HTMLSelectElement>,
+		setFieldValue: (field: string, value: string) => void
+	) => {
+		const provinceKey = event.target.value;
+		setFieldValue('province', provinceKey);
+		setFieldValue('district', '');
+		setDistricts(provinceKey ? Object.entries(data[provinceKey].cities) : []);
+	};
 	const handleSubmit = (values: FormValues) => {
 		const formIdFromParams = id;
 
@@ -106,6 +126,7 @@ const PersonalInformationForm: React.FC = () => {
 			const oldData = localStorage.getItem("data") ? JSON.parse(localStorage.getItem("data") || "") : [];
 			const detail = oldData?.find((item: ExtendedFormValues) => item.formId === id);
 			setDefaultValue(detail);
+			setDistricts(detail.province ? Object.entries(data[detail.province].cities) : []);
 		}
 	}, [id]);
 
@@ -118,7 +139,7 @@ const PersonalInformationForm: React.FC = () => {
 				validationSchema={validationSchema}
 				onSubmit={handleSubmit}
 			>
-				{({ values, handleSubmit, resetForm }) => (
+				{({ values, handleSubmit,setFieldValue, resetForm }) => (
 					<Form onSubmit={handleSubmit}>
 						{/* Personal Information */}
 						<Row className="mb-3">
@@ -265,10 +286,20 @@ const PersonalInformationForm: React.FC = () => {
 						<Row className="mb-3">
 							<Col>
 								<label>Province*</label>
-								<Field as="select" name="province" className="form-control">
+								<Field
+									as="select"
+									name="province"
+									className="form-control"
+									onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+										handleProvinceChange(e, setFieldValue)
+									}
+								>
 									<option value="">-----Choose-----</option>
-									<option value="province1">Province 1</option>
-									<option value="province2">Province 2</option>
+									{Object.entries(data).map(([key, value]) => (
+										<option key={key} value={key}>
+											{value.name}
+										</option>
+									))}
 								</Field>
 								<ErrorMessage name="province" component="div" className="text-danger" />
 							</Col>
@@ -276,8 +307,11 @@ const PersonalInformationForm: React.FC = () => {
 								<label>District*</label>
 								<Field as="select" name="district" className="form-control">
 									<option value="">-----Choose-----</option>
-									<option value="district1">District 1</option>
-									<option value="district2">District 2</option>
+									{districts.map(([key, value]) => (
+										<option key={key} value={key}>
+											{value}
+										</option>
+									))}
 								</Field>
 								<ErrorMessage name="district" component="div" className="text-danger" />
 							</Col>
